@@ -1,0 +1,106 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engaging Widget Sections</title>
+    <script src="https://unpkg.com/react/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Arial', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div id="root"></div>
+    <script type="text/babel">
+        const Home = ({ setSection }) => {
+            return (
+                <div className="flex flex-col items-center p-4 space-y-4">
+                    <h1 className="text-4xl font-bold text-blue-600 mb-8">Welcome to Our Widget Hub</h1>
+                    <button onClick={() => setSection('perplexity')} className="w-full bg-purple-500 text-white p-4 rounded-lg shadow-md hover:bg-purple-600 transition duration-300">
+                        Perplexity AI Chatbot
+                    </button>
+                </div>
+            );
+        };
+
+        const PerplexitySection = ({ setSection }) => {
+            const handleChatRequest = async () => {
+                const url = 'https://api.perplexity.ai/chat/completions';
+                const headers = {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}` // Fetch from your project's environment variables
+                };
+                const body = {
+                    "model": "pplx-7b-online",
+                    "stream": false,
+                    "max_tokens": 1024,
+                    "frequency_penalty": 1,
+                    "temperature": 0.0,
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": "Be precise and concise in your responses."
+                        },
+                        {
+                            "role": "user",
+                            "content": "How many stars are there in our galaxy?"
+                        }
+                    ]
+                };
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: headers,
+                        body: JSON.stringify(body)
+                    });
+                    const data = await response.json();
+                    document.getElementById('chatbot-response').innerText = data.choices[0].message.content;
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            };
+
+            React.useEffect(() => {
+                window.history.pushState({}, '', '/perplexity');
+                handleChatRequest(); // Call the chat request when the section is loaded
+            }, []);
+
+            return (
+                <div className="flex flex-col items-center p-4 space-y-4">
+                    <button onClick={() => setSection('home')} className="self-start bg-gray-200 text-black p-2 rounded-lg shadow-md hover:bg-gray-300 transition duration-300">
+                        Back to Home
+                    </button>
+                    <div className="w-full bg-white p-4 rounded-lg shadow-md">
+                        <h2 className="text-xl font-bold mb-4 text-purple-600">Perplexity AI Chatbot</h2>
+                        {/* Display the chatbot response here */}
+                        <div id="chatbot-response" className="mt-2"></div>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [section, setSection] = React.useState('home');
+
+            React.useEffect(() => {
+                const path = window.location.pathname;
+                if (path === '/perplexity') setSection('perplexity');
+                else setSection('home');
+            }, []);
+
+            return (
+                <div className="min-h-screen flex items-center justify-center">
+                    {section === 'home' && <Home setSection={setSection} />}
+                    {section === 'perplexity' && <PerplexitySection setSection={setSection} />}
+                </div>
+            );
+        };
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
